@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 // dan supaya file ini isinya hanya pengaturan aplikasi + daftar route.
 import 'pages/login_page.dart';
 import 'pages/pesanan_page.dart';
+import 'pages/rekap_nota_page.dart';
 import 'pages/transaksi_page.dart';
 import 'pages/zona_meja_page.dart';
 
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         '/transaksi': (BuildContext context) => const TransaksiPage(),
         '/pesanan': (BuildContext context) => const PesananPage(),
         '/zonameja': (BuildContext context) => const ZonaMejaPage(),
+        '/rekap': (BuildContext context) => const RekapNotaPage(),
       },
     );
   }
