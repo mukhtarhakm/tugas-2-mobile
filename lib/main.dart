@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
 import 'pages/pesanan_page.dart';
 import 'pages/transaksi_page.dart';
+import 'pages/zona_meja_page.dart';
 
 // main() adalah titik awal program Dart.
 // runApp() memasang widget paling atas (MyApp) ke layar.
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         '/login': (BuildContext context) => const LoginPage(),
         '/transaksi': (BuildContext context) => const TransaksiPage(),
         '/pesanan': (BuildContext context) => const PesananPage(),
+        '/zonameja': (BuildContext context) => const ZonaMejaPage(),
       },
     );
   }
