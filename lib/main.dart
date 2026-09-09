@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Setiap halaman ditulis di file terpisah supaya mudah dicari,
 // dan supaya file ini isinya hanya pengaturan aplikasi + daftar route.
 import 'pages/login_page.dart';
+import 'pages/pesanan_page.dart';
 import 'pages/transaksi_page.dart';
 
 // main() adalah titik awal program Dart.
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
       routes: <String, WidgetBuilder>{
         '/login': (BuildContext context) => const LoginPage(),
         '/transaksi': (BuildContext context) => const TransaksiPage(),
+        '/pesanan': (BuildContext context) => const PesananPage(),
       },
     );
   }
