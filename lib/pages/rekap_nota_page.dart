@@ -141,7 +141,7 @@ class _RekapNotaPageState extends State<RekapNotaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Rekap Nota Harian')),
+      appBar: AppBar(title: const Text('Total Angka (Rekap Nota)')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

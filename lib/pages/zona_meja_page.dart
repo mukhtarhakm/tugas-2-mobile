@@ -104,7 +104,7 @@ class _ZonaMejaPageState extends State<ZonaMejaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cek Zona Meja')),
+      appBar: AppBar(title: const Text('Bilangan Ganjil / Genap')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

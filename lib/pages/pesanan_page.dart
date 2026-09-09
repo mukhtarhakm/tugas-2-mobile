@@ -186,7 +186,7 @@ class _PesananPageState extends State<PesananPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pesanan & Split Bill')),
+      appBar: AppBar(title: const Text('Perkalian & Pembagian')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

@@ -18,7 +18,7 @@ class TimPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tentang Tim Pengembang')),
+      appBar: AppBar(title: const Text('Data Kelompok Pengembang')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
