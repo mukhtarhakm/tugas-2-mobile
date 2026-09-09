@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Setiap halaman ditulis di file terpisah supaya mudah dicari,
 // dan supaya file ini isinya hanya pengaturan aplikasi + daftar route.
 import 'pages/login_page.dart';
+import 'pages/transaksi_page.dart';
 
 // main() adalah titik awal program Dart.
 // runApp() memasang widget paling atas (MyApp) ke layar.
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
       // tidak perlu menulis ulang widget tujuan di setiap tombol.
       routes: <String, WidgetBuilder>{
         '/login': (BuildContext context) => const LoginPage(),
+        '/transaksi': (BuildContext context) => const TransaksiPage(),
       },
     );
   }
