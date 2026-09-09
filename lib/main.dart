@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Setiap halaman ditulis di file terpisah supaya mudah dicari,
 // dan supaya file ini isinya hanya pengaturan aplikasi + daftar route.
 import 'pages/login_page.dart';
+import 'pages/menu_page.dart';
 import 'pages/pesanan_page.dart';
 import 'pages/rekap_nota_page.dart';
 import 'pages/tim_page.dart';
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
         '/zonameja': (BuildContext context) => const ZonaMejaPage(),
         '/rekap': (BuildContext context) => const RekapNotaPage(),
         '/tim': (BuildContext context) => const TimPage(),
+        '/menu': (BuildContext context) => const MenuPage(),
       },
     );
   }
