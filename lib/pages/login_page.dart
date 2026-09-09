@@ -96,7 +96,38 @@ class _LoginPageState extends State<LoginPage> {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: Colors.black54),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
+            // Info bantuan username & password untuk mempermudah dev/testing
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.brown.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.brown.shade200),
+              ),
+              child: const Column(
+                children: <Widget>[
+                  Text(
+                    '🔑 Info Akun Kasir:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.brown,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Username: admin   |   Password: 12345',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(
