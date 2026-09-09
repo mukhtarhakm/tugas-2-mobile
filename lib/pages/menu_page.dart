@@ -57,9 +57,9 @@ class MenuPage extends StatelessWidget {
             const SizedBox(height: 16),
             _tombolMenu(
               context,
-              Icons.payments,
-              'Transaksi & Kembalian',
-              'Hitung kembalian dan tambah item belanja',
+              Icons.calculate,
+              'Penjumlahan & Pengurangan',
+              'Operasi hitung tambah (+) dan kurang (−) angka',
               '/transaksi',
             ),
             _tombolMenu(

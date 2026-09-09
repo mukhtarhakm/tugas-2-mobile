@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../utils/format.dart';
 
-// Halaman ini menangani PENJUMLAHAN (tambah item) dan
-// PENGURANGAN (uang dibayar - total belanja = kembalian).
+// Halaman ini menangani menu PENJUMLAHAN (+) dan PENGURANGAN (-) angka,
+// yang dapat difungsikan sebagai kalkulator umum maupun simulasi transaksi kasir.
 class TransaksiPage extends StatefulWidget {
   const TransaksiPage({super.key});
 
@@ -12,235 +12,242 @@ class TransaksiPage extends StatefulWidget {
 }
 
 class _TransaksiPageState extends State<TransaksiPage> {
-  final TextEditingController _totalController = TextEditingController();
-  final TextEditingController _bayarController = TextEditingController();
+  final TextEditingController _angka1Controller = TextEditingController();
+  final TextEditingController _angka2Controller = TextEditingController();
 
-  // Satu variabel untuk teks yang ditampilkan, dua bool sebagai status.
-  // Status inilah yang menentukan warna teks: merah, oranye, atau hitam.
   String _hasil = '';
   bool _adaError = false;
-  bool _adaPeringatan = false;
 
   @override
   void dispose() {
-    // Setiap controller wajib dibuang agar tidak membebani memori.
-    _totalController.dispose();
-    _bayarController.dispose();
+    _angka1Controller.dispose();
+    _angka2Controller.dispose();
     super.dispose();
   }
 
   // Fungsi bantu untuk mengubah teks menjadi double.
   // Mengembalikan null kalau teksnya bukan angka yang valid.
   double? _bacaNominal(String teks) {
-    // Kasir sering mengetik koma sebagai pemisah desimal, padahal Dart
-    // hanya mengerti titik. Jadi koma diubah dulu menjadi titik.
-    // trim() membuang spasi di awal/akhir agar " 15000 " tetap terbaca.
     final String bersih = teks.trim().replaceAll(',', '.');
-
-    // tryParse dipakai (bukan parse) karena tryParse mengembalikan null
-    // saat gagal, sedangkan parse melempar error dan aplikasi berhenti.
-    // Teks seperti "abc", "12a", atau "1.2.3" otomatis menghasilkan null.
     return double.tryParse(bersih);
   }
 
-  // Pengecekan yang sama dipakai oleh kedua tombol, jadi dikumpulkan
-  // di satu fungsi supaya tidak ditulis dua kali.
-  // Mengembalikan true kalau kedua input sudah aman untuk dihitung.
-  bool _inputValid(double? total, double? bayar, bool adaYangKosong) {
+  // Helper untuk format teks angka biasa (menghapus .0 jika bilangan bulat)
+  String _formatAngka(double nilai) {
+    if (nilai == nilai.roundToDouble()) {
+      return nilai.toInt().toString();
+    }
+    return nilai.toString();
+  }
+
+  bool _inputValid(double? angka1, double? angka2, bool adaYangKosong) {
     if (adaYangKosong) {
-      _tampilkanPesan('Total belanja dan uang dibayar harus diisi', true, false);
+      _tampilkanPesan('Angka pertama dan angka kedua harus diisi', true);
       return false;
     }
-    if (total == null || bayar == null) {
-      _tampilkanPesan('Nominal harus berupa angka yang valid', true, false);
+    if (angka1 == null || angka2 == null) {
+      _tampilkanPesan('Input harus berupa angka yang valid', true);
       return false;
     }
-    if (total < 0 || bayar < 0) {
-      _tampilkanPesan('Nominal tidak boleh bernilai negatif', true, false);
-      return false;
-    }
-    // Nominal raksasa (misalnya 1e400) dibaca Dart sebagai Infinity.
-    // Dicek di sini supaya hasilnya tidak berupa tulisan "Infinity".
-    if (!total.isFinite || !bayar.isFinite) {
-      _tampilkanPesan('Nominal terlalu besar untuk dihitung', true, false);
+    if (!angka1.isFinite || !angka2.isFinite) {
+      _tampilkanPesan('Nominal terlalu besar untuk dihitung', true);
       return false;
     }
     return true;
   }
 
-  // TOMBOL 1: kembalian = uang dibayar - total belanja (PENGURANGAN).
-  void _hitungKembalian() {
-    final String teksTotal = _totalController.text.trim();
-    final String teksBayar = _bayarController.text.trim();
+  // OPERASI PENJUMLAHAN: Angka 1 + Angka 2
+  void _hitungPenjumlahan() {
+    final String teks1 = _angka1Controller.text.trim();
+    final String teks2 = _angka2Controller.text.trim();
 
-    final double? total = _bacaNominal(teksTotal);
-    final double? bayar = _bacaNominal(teksBayar);
+    final double? a1 = _bacaNominal(teks1);
+    final double? a2 = _bacaNominal(teks2);
 
-    if (!_inputValid(total, bayar, teksTotal.isEmpty || teksBayar.isEmpty)) {
+    if (!_inputValid(a1, a2, teks1.isEmpty || teks2.isEmpty)) {
       return;
     }
 
-    // Setelah _inputValid bernilai true, kedua angka pasti tidak null.
-    // Tanda "!" memberi tahu Dart hal itu agar aturan null-safety terpenuhi.
-    final double totalBelanja = total!;
-    final double uangDibayar = bayar!;
+    final double angka1 = a1!;
+    final double angka2 = a2!;
+    final double total = angka1 + angka2;
 
-    // Menghitung kembalian dari total nol tidak masuk akal bagi kasir,
-    // karena artinya belum ada barang yang dibeli.
-    if (totalBelanja == 0) {
-      _tampilkanPesan('Total belanja tidak boleh nol', true, false);
+    if (!total.isFinite) {
+      _tampilkanPesan('Hasil terlalu besar untuk dihitung', true);
       return;
     }
 
-    // Uang kurang bukan kesalahan input, melainkan kondisi transaksi.
-    // Selisihnya dihitung terbalik (total - bayar) agar tampil positif.
-    if (uangDibayar < totalBelanja) {
-      final double kurang = totalBelanja - uangDibayar;
-      _tampilkanPesan(
-        'Uang tidak cukup, kurang ${formatRupiah(kurang)}',
-        true,
-        false,
-      );
-      return;
-    }
-
-    final double kembalian = uangDibayar - totalBelanja;
-    _tampilkanPesan('Kembalian: ${formatRupiah(kembalian)}', false, false);
-  }
-
-  // TOMBOL 2: total belanja + nominal item baru (PENJUMLAHAN).
-  void _tambahItem() {
-    final String teksTotal = _totalController.text.trim();
-    final String teksItem = _bayarController.text.trim();
-
-    final double? total = _bacaNominal(teksTotal);
-    final double? item = _bacaNominal(teksItem);
-
-    if (!_inputValid(total, item, teksTotal.isEmpty || teksItem.isEmpty)) {
-      return;
-    }
-
-    // Di sini total nol TIDAK dilarang, karena kasir yang baru mulai
-    // mencatat nota memang berangkat dari total 0 lalu menambah item.
-    final double totalBaru = total! + item!;
-
-    if (!totalBaru.isFinite) {
-      _tampilkanPesan('Nominal terlalu besar untuk dihitung', true, false);
-      return;
-    }
-
-    // Hasil penjumlahan langsung ditulis kembali ke kolom Total Belanja
-    // supaya kasir bisa menambah item berikutnya tanpa mengetik ulang.
-    // Kolom kedua dikosongkan agar siap diisi nominal item selanjutnya.
-    if (totalBaru == totalBaru.roundToDouble()) {
-      // Kalau hasilnya bilangan bulat, ".0" dibuang supaya kolom input
-      // tidak menampilkan "50000.0" yang membingungkan kasir.
-      _totalController.text = totalBaru.toStringAsFixed(0);
-    } else {
-      _totalController.text = totalBaru.toString();
-    }
-    _bayarController.text = '';
+    // Hasil penjumlahan otomatis di-update ke Field 1, dan Field 2 dikosongkan
+    // agar pengguna bisa langsung menambah angka berikutnya (akumulator).
+    _angka1Controller.text = _formatAngka(total);
+    _angka2Controller.clear();
 
     _tampilkanPesan(
-      'Item ditambahkan. Total belanja: ${formatRupiah(totalBaru)}',
-      false,
+      'Hasil Penjumlahan (+):\n'
+      '${_formatAngka(angka1)} + ${_formatAngka(angka2)} = ${_formatAngka(total)}\n'
+      '(${formatRupiah(total)})\n'
+      '✓ Total otomatis masuk ke Angka Pertama',
       false,
     );
   }
 
-  // Tombol Reset: mengosongkan semua kolom dan teks hasil.
-  void _reset() {
-    _totalController.text = '';
-    _bayarController.text = '';
-    _tampilkanPesan('', false, false);
+  // OPERASI PENGURANGAN: Angka 1 - Angka 2
+  void _hitungPengurangan() {
+    final String teks1 = _angka1Controller.text.trim();
+    final String teks2 = _angka2Controller.text.trim();
+
+    final double? a1 = _bacaNominal(teks1);
+    final double? a2 = _bacaNominal(teks2);
+
+    if (!_inputValid(a1, a2, teks1.isEmpty || teks2.isEmpty)) {
+      return;
+    }
+
+    final double angka1 = a1!;
+    final double angka2 = a2!;
+    final double selisih = angka1 - angka2;
+
+    if (!selisih.isFinite) {
+      _tampilkanPesan('Hasil terlalu besar untuk dihitung', true);
+      return;
+    }
+
+    String catatanKasir = '';
+    if (selisih >= 0) {
+      catatanKasir = 'Kembalian: ${formatRupiah(selisih)}';
+    } else {
+      catatanKasir = 'Catatan Kasir: Kurang ${formatRupiah(selisih.abs())}';
+    }
+
+    _tampilkanPesan(
+      'Hasil Pengurangan (−):\n'
+      '${_formatAngka(angka1)} − ${_formatAngka(angka2)} = ${_formatAngka(selisih)}\n'
+      '($catatanKasir)',
+      false,
+    );
   }
 
-  // Semua perubahan tampilan dikumpulkan di satu fungsi supaya setState
-  // hanya ditulis sekali dan tidak ada status yang lupa diperbarui.
-  void _tampilkanPesan(String pesan, bool error, bool peringatan) {
+  void _reset() {
+    _angka1Controller.clear();
+    _angka2Controller.clear();
+    _tampilkanPesan('', false);
+  }
+
+  void _tampilkanPesan(String pesan, bool error) {
     setState(() {
       _hasil = pesan;
       _adaError = error;
-      _adaPeringatan = peringatan;
     });
-  }
-
-  // Warna teks ditentukan dari status: merah untuk error,
-  // oranye untuk peringatan, hitam untuk hasil normal.
-  Color _warnaHasil() {
-    if (_adaError) {
-      return Colors.red;
-    }
-    if (_adaPeringatan) {
-      return Colors.orange;
-    }
-    return Colors.black87;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Transaksi & Kembalian')),
+      appBar: AppBar(title: const Text('Penjumlahan & Pengurangan')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            TextField(
-              controller: _totalController,
-              // signed: true agar tanda minus bisa diketik (untuk diuji),
-              // decimal: true agar titik/koma desimal muncul di keyboard.
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Total Belanja (Rp)',
-                hintText: 'contoh: 35000',
-                border: OutlineInputBorder(),
+            Card(
+              color: Colors.brown.shade50,
+              child: const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text(
+                  '💡 Masukkan dua angka untuk melakukan operasi matematika '
+                  'penjumlahan (+) atau pengurangan (−). '
+                  'Dapat difungsikan juga untuk simulasi transaksi kasir (Belanja & Bayar).',
+                  style: TextStyle(fontSize: 13, color: Colors.brown),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _bayarController,
+              controller: _angka1Controller,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
                 signed: true,
               ),
               decoration: const InputDecoration(
-                labelText: 'Uang Dibayar (Rp)',
-                hintText: 'dipakai juga sebagai nominal item baru',
+                labelText: 'Angka Pertama (contoh: 50000)',
+                hintText: 'Masukkan angka pertama / total belanja',
                 border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.looks_one_outlined),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _angka2Controller,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+                signed: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Angka Kedua (contoh: 20000)',
+                hintText: 'Masukkan angka kedua / nominal item',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.looks_two_outlined),
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _hitungKembalian,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Hitung Kembalian'),
-              ),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _hitungPenjumlahan,
+                    icon: const Icon(Icons.add),
+                    label: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'Penjumlahan (+)',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _hitungPengurangan,
+                    icon: const Icon(Icons.remove),
+                    label: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'Pengurangan (−)',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _tambahItem,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Tambah Item'),
-              ),
+            OutlinedButton.icon(
+              onPressed: _reset,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reset'),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(onPressed: _reset, child: const Text('Reset')),
             const SizedBox(height: 24),
-            Text(
-              _hasil,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: _warnaHasil(),
+            if (_hasil.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _adaError ? Colors.red.shade50 : Colors.brown.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _adaError ? Colors.red.shade200 : Colors.brown.shade300,
+                  ),
+                ),
+                child: Text(
+                  _hasil,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: _adaError ? Colors.red.shade800 : Colors.black87,
+                  ),
+                ),
               ),
-            ),
           ],
         ),
       ),
