@@ -19,7 +19,7 @@ class _PesananPageState extends State<PesananPage> {
   // Subtotal disimpan di state karena tombol split bill membutuhkan
   // hasil dari tombol sebelumnya. Nilainya null selama subtotal
   // belum pernah dihitung, dan itulah yang dipakai untuk pengecekan.
-  double? _subtotal;
+  AngkaDesimal? _subtotal;
 
   // Satu variabel untuk teks hasil, dua bool sebagai penanda status.
   String _hasil = '';
@@ -35,15 +35,9 @@ class _PesananPageState extends State<PesananPage> {
     super.dispose();
   }
 
-  // Fungsi bantu mengubah teks menjadi double, null kalau tidak valid.
-  double? _bacaNominal(String teks) {
-    // Koma diubah jadi titik karena Dart hanya mengenal titik sebagai
-    // pemisah desimal, dan trim() membuang spasi di awal/akhir.
-    final String bersih = teks.trim().replaceAll(',', '.');
-
-    // tryParse mengembalikan null saat gagal, sehingga aplikasi tidak
-    // crash ketika kasir mengetik "abc", "12a", atau "1.2.3".
-    return double.tryParse(bersih);
+  // Fungsi bantu mengubah teks menjadi AngkaDesimal (mendukung koma/titik desimal & digit tak terbatas).
+  AngkaDesimal? _bacaNominal(String teks) {
+    return AngkaDesimal.tryParse(teks);
   }
 
   // TOMBOL 1: subtotal = harga satuan x jumlah pesanan (PERKALIAN).
@@ -56,47 +50,42 @@ class _PesananPageState extends State<PesananPage> {
       return;
     }
 
-    final double? harga = _bacaNominal(teksHarga);
-    final double? jumlah = _bacaNominal(teksJumlah);
+    final AngkaDesimal? harga = _bacaNominal(teksHarga);
+    final AngkaDesimal? jumlah = _bacaNominal(teksJumlah);
 
     if (harga == null || jumlah == null) {
       _tampilkanPesan('Input harus berupa angka yang valid', true, false);
       return;
     }
 
-    if (harga < 0) {
+    if (harga.isNegatif) {
       _tampilkanPesan('Harga tidak boleh negatif', true, false);
       return;
     }
 
     // Pesanan nol atau negatif tidak mungkin terjadi di kasir,
     // jadi ditolak sebelum dikalikan.
-    if (jumlah <= 0) {
+    if (!jumlah.isPositif) {
       _tampilkanPesan('Jumlah pesanan minimal 1', true, false);
       return;
     }
 
-    final double subtotal = harga * jumlah;
-
-    // Perkalian dua angka raksasa bisa menghasilkan Infinity.
-    // Dicek supaya layar tidak menampilkan tulisan "Infinity".
-    if (!subtotal.isFinite) {
-      _tampilkanPesan('Nominal terlalu besar untuk dihitung', true, false);
-      return;
-    }
+    // Perkalian dengan BigInt presisi tak terbatas:
+    // Bebas dari batasan digit dan tidak memunculkan notasi ilmiah 'e'.
+    final AngkaDesimal subtotal = harga * jumlah;
 
     // Subtotal disimpan ke state agar bisa dipakai tombol split bill.
     setState(() {
       _subtotal = subtotal;
     });
-    _tampilkanPesan('Subtotal: ${formatRupiah(subtotal)}', false, false);
+    _tampilkanPesan('Subtotal: ${formatRupiahDesimal(subtotal)}', false, false);
   }
 
   // TOMBOL 2: split bill = subtotal / jumlah orang (PEMBAGIAN).
   void _hitungSplitBill() {
     // Split bill hanya masuk akal kalau subtotalnya sudah ada,
     // jadi urutan kerjanya dipaksa: hitung subtotal dulu.
-    final double? subtotal = _subtotal;
+    final AngkaDesimal? subtotal = _subtotal;
     if (subtotal == null) {
       _tampilkanPesan('Hitung subtotal terlebih dahulu', true, false);
       return;
@@ -115,15 +104,20 @@ class _PesananPageState extends State<PesananPage> {
       return;
     }
 
-    final double? orang = _bacaNominal(teksOrang);
+    // Sesuai aturan: jumlah orang TIDAK boleh desimal (harus bilangan bulat)
+    if (teksOrang.contains('.') || teksOrang.contains(',')) {
+      _tampilkanPesan('Jumlah orang harus berupa bilangan bulat', true, false);
+      return;
+    }
+
+    final BigInt? orang = BigInt.tryParse(teksOrang);
     if (orang == null) {
       _tampilkanPesan('Input harus berupa angka yang valid', true, false);
       return;
     }
 
-    // PEMBAGIAN DENGAN NOL dicek SEBELUM dibagi. Kalau tidak dicek,
-    // Dart menghasilkan Infinity yang tidak berarti apa-apa bagi kasir.
-    if (orang == 0) {
+    // PEMBAGIAN DENGAN NOL dicek SEBELUM dibagi.
+    if (orang == BigInt.zero) {
       _tampilkanPesan(
         'Jumlah orang untuk split bill tidak boleh nol',
         true,
@@ -132,26 +126,17 @@ class _PesananPageState extends State<PesananPage> {
       return;
     }
 
-    if (orang < 1) {
+    if (orang < BigInt.one) {
       _tampilkanPesan('Jumlah orang minimal 1', true, false);
       return;
     }
 
-    if (orang != orang.roundToDouble()) {
-      _tampilkanPesan('Jumlah orang harus berupa bilangan bulat', true, false);
-      return;
-    }
-
-    final double perOrang = subtotal / orang;
-
-    if (!perOrang.isFinite) {
-      _tampilkanPesan('Nominal terlalu besar untuk dihitung', true, false);
-      return;
-    }
+    // Pembagian presisi 2 desimal dengan BigInt tanpa batas nominal
+    final AngkaDesimal perOrang = subtotal.bagiBulat(orang, presisi: 2);
 
     _tampilkanPesan(
-      'Subtotal: ${formatRupiah(subtotal)}\n'
-      'Bayar per orang: ${formatRupiah(perOrang)}',
+      'Subtotal: ${formatRupiahDesimal(subtotal)}\n'
+      'Bayar per orang: ${formatRupiahDesimal(perOrang)}',
       false,
       false,
     );
