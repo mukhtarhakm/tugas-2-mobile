@@ -29,4 +29,3 @@ Login dengan username `admin` dan password `12345`.
 
 Dokumentasi lengkap (tabel pemetaan kriteria tugas, skenario pengujian, dan penjelasan
 alur logika tiap halaman) ada di [DOKUMENTASI.md](DOKUMENTASI.md).
-Pembagian tugas commit antar anggota kelompok ada di [PEMBAGIAN_TUGAS.md](PEMBAGIAN_TUGAS.md).
