@@ -167,30 +167,44 @@ String formatRupiah(double nilai) {
   final bool negatif = nilai < 0;
   final double angka = nilai.abs();
 
-  // LANGKAH 3: batasi nominal yang terlalu besar.
-  // Di atas 1.000 triliun, Dart menuliskan angka dalam notasi ilmiah
-  // (contoh "1e+21") sehingga tidak bisa diberi pemisah ribuan.
-  // Dibatasi di sini supaya aplikasi tidak error.
-  if (angka >= 1000000000000000) {
-    return 'Rp (nominal terlalu besar)';
+  // LANGKAH 3: ubah angka menjadi teks tanpa notasi ilmiah 'e'.
+  String teks = angka.toString();
+  if (teks.toLowerCase().contains('e')) {
+    final List<String> parts = teks.toLowerCase().split('e');
+    final String basis = parts[0];
+    final int eksponen = int.tryParse(parts[1]) ?? 0;
+    if (eksponen > 0) {
+      final int dotIndex = basis.indexOf('.');
+      if (dotIndex == -1) {
+        teks = basis + ('0' * eksponen);
+      } else {
+        final String depan = basis.substring(0, dotIndex);
+        final String belakang = basis.substring(dotIndex + 1);
+        if (eksponen >= belakang.length) {
+          teks = depan + belakang + ('0' * (eksponen - belakang.length));
+        } else {
+          teks = '$depan${belakang.substring(0, eksponen)}.${belakang.substring(eksponen)}';
+        }
+      }
+    }
   }
 
-  // LANGKAH 4: bulatkan ke 2 angka di belakang koma.
-  // toStringAsFixed(2) selalu menghasilkan bentuk "15833.33",
-  // jadi posisi titiknya pasti ada dan mudah dipisah.
-  final String teks = angka.toStringAsFixed(2);
-
-  // LANGKAH 5: potong menjadi bagian bulat dan bagian desimal.
-  // indexOf mencari posisi titik, substring memotong teksnya.
+  // LANGKAH 4: potong menjadi bagian bulat dan bagian desimal.
+  String bagianBulat;
+  String bagianDesimal = '';
   final int posisiTitik = teks.indexOf('.');
-  final String bagianBulat = teks.substring(0, posisiTitik);
-  final String bagianDesimal = teks.substring(posisiTitik + 1);
+  if (posisiTitik != -1) {
+    bagianBulat = teks.substring(0, posisiTitik);
+    bagianDesimal = teks.substring(posisiTitik + 1);
+    // Batasi desimal maksimal 2 digit di belakang koma
+    if (bagianDesimal.length > 2) {
+      bagianDesimal = bagianDesimal.substring(0, 2);
+    }
+  } else {
+    bagianBulat = teks;
+  }
 
-  // LANGKAH 6: sisipkan titik sebagai pemisah ribuan.
-  // Dihitung dari KANAN ke kiri (i dikurangi terus), karena aturan
-  // ribuan memang dihitung dari digit paling belakang.
-  // Setiap 3 digit ditambahkan titik, kecuali kalau sudah di digit paling depan
-  // (syarat i > 0), supaya hasilnya tidak menjadi ".150.000".
+  // LANGKAH 5: sisipkan titik sebagai pemisah ribuan dari kanan ke kiri.
   String hasilBulat = '';
   int hitungDigit = 0;
   for (int i = bagianBulat.length - 1; i >= 0; i--) {
@@ -201,18 +215,16 @@ String formatRupiah(double nilai) {
     }
   }
 
-  // LANGKAH 7: pasang bagian desimal hanya kalau memang ada isinya.
-  // Uang Rp 15.000 tidak perlu ditulis "Rp 15.000,00",
-  // tetapi Rp 15.833,33 tetap butuh koma dan 2 digit di belakangnya.
+  // LANGKAH 6: pasang bagian desimal hanya kalau memang ada isinya.
   String hasil = hasilBulat;
-  if (bagianDesimal != '00') {
+  if (bagianDesimal.isNotEmpty && bagianDesimal != '0' && bagianDesimal != '00') {
     hasil = '$hasilBulat,$bagianDesimal';
   }
 
-  // LANGKAH 8: kembalikan tanda minus (kalau tadi angkanya negatif)
+  // LANGKAH 7: kembalikan tanda minus (kalau tadi angkanya negatif)
   // lalu tambahkan awalan "Rp ".
   if (negatif) {
-    hasil = '-$hasil';
+    return 'Rp -$hasil';
   }
   return 'Rp $hasil';
 }

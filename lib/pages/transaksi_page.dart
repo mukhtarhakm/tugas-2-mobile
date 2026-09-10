@@ -32,15 +32,40 @@ class _TransaksiPageState extends State<TransaksiPage> {
     return double.tryParse(bersih);
   }
 
-  // Helper untuk format teks angka biasa (menghapus .0 jika bilangan bulat)
+  // Helper untuk format teks angka biasa tanpa notasi ilmiah 'e'
   String _formatAngka(double nilai) {
-    if (nilai.abs() < 1e15 && nilai == nilai.roundToDouble()) {
-      return nilai.toInt().toString();
-    }
+    if (!nilai.isFinite) return nilai.toString();
+
     final String s = nilai.toString();
-    if (s.endsWith('.0')) {
-      return s.substring(0, s.length - 2);
+
+    // Jika tidak ada notasi ilmiah 'e', cukup buang akhiran '.0'
+    if (!s.toLowerCase().contains('e')) {
+      if (s.endsWith('.0')) {
+        return s.substring(0, s.length - 2);
+      }
+      return s;
     }
+
+    // Jika ada notasi ilmiah 'e', ubah menjadi angka biasa (tanpa 'e')
+    final List<String> parts = s.toLowerCase().split('e');
+    final String basis = parts[0];
+    final int eksponen = int.tryParse(parts[1]) ?? 0;
+
+    if (eksponen > 0) {
+      final int dotIndex = basis.indexOf('.');
+      if (dotIndex == -1) {
+        return basis + ('0' * eksponen);
+      } else {
+        final String depan = basis.substring(0, dotIndex);
+        final String belakang = basis.substring(dotIndex + 1);
+        if (eksponen >= belakang.length) {
+          return depan + belakang + ('0' * (eksponen - belakang.length));
+        } else {
+          return '$depan${belakang.substring(0, eksponen)}.${belakang.substring(eksponen)}';
+        }
+      }
+    }
+
     return s;
   }
 
