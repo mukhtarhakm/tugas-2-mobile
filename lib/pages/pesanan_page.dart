@@ -132,8 +132,13 @@ class _PesananPageState extends State<PesananPage> {
       return;
     }
 
-    if (orang < 0) {
+    if (orang < 1) {
       _tampilkanPesan('Jumlah orang minimal 1', true, false);
+      return;
+    }
+
+    if (orang != orang.roundToDouble()) {
+      _tampilkanPesan('Jumlah orang harus berupa bilangan bulat', true, false);
       return;
     }
 

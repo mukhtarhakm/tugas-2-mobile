@@ -88,6 +88,11 @@ class _RekapNotaPageState extends State<RekapNotaPage> {
     // lebih dari nol pada pengecekan sebelumnya.
     final double rataRata = total / hargaValid.length;
 
+    if (!total.isFinite || !rataRata.isFinite) {
+      _tampilkanPesan('Total nota terlalu besar untuk dihitung', true, false);
+      return;
+    }
+
     // Hasil disusun menjadi tiga baris dalam satu variabel teks.
     String pesan =
         'Jumlah Item : ${hargaValid.length}\n'

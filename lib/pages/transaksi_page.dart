@@ -34,10 +34,14 @@ class _TransaksiPageState extends State<TransaksiPage> {
 
   // Helper untuk format teks angka biasa (menghapus .0 jika bilangan bulat)
   String _formatAngka(double nilai) {
-    if (nilai == nilai.roundToDouble()) {
+    if (nilai.abs() < 1e15 && nilai == nilai.roundToDouble()) {
       return nilai.toInt().toString();
     }
-    return nilai.toString();
+    final String s = nilai.toString();
+    if (s.endsWith('.0')) {
+      return s.substring(0, s.length - 2);
+    }
+    return s;
   }
 
   bool _inputValid(double? angka1, double? angka2, bool adaYangKosong) {
