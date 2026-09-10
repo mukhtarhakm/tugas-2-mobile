@@ -36,15 +36,6 @@ class _ZonaMejaPageState extends State<ZonaMejaPage> {
       return;
     }
 
-    // Urutan pengecekan sengaja bertahap agar pesan errornya tepat sasaran:
-    // 1) bukan angka, 2) angka tapi desimal, 3) di luar jangkauan int,
-    // 4) nol atau negatif.
-    final double? sebagaiDesimal = double.tryParse(teks);
-    if (sebagaiDesimal == null) {
-      _tampilkanPesan('Nomor meja harus berupa bilangan bulat', true, false);
-      return;
-    }
-
     // Kalau mengandung titik berarti kasir mengetik angka desimal,
     // padahal nomor meja tidak mungkin 4.5.
     if (teks.contains('.')) {
@@ -52,25 +43,23 @@ class _ZonaMejaPageState extends State<ZonaMejaPage> {
       return;
     }
 
-    // int.tryParse mengembalikan null kalau angkanya di luar jangkauan int
-    // (misalnya 30 digit), sehingga aplikasi tidak crash.
-    final int? nomor = int.tryParse(teks);
+    // BigInt.tryParse mendukung panjang digit tak terbatas
+    // sehingga tidak mentok di 19 digit seperti int biasa.
+    final BigInt? nomor = BigInt.tryParse(teks);
     if (nomor == null) {
-      _tampilkanPesan('Nomor meja tidak valid', true, false);
+      _tampilkanPesan('Nomor meja harus berupa bilangan bulat', true, false);
       return;
     }
 
     // Nomor meja di kafe selalu dimulai dari 1, jadi nol dan bilangan
     // negatif ditolak di sini.
-    if (nomor <= 0) {
+    if (nomor <= BigInt.zero) {
       _tampilkanPesan('Nomor meja harus lebih besar dari 0', true, false);
       return;
     }
 
-    // Dipakai "% 2 != 0" untuk ganjil, BUKAN "% 2 == 1".
-    // Alasannya: sisa bagi bilangan negatif tidak selalu bernilai 1,
-    // sehingga "== 1" bisa salah membaca. Bentuk "!= 0" selalu aman.
-    if (nomor % 2 != 0) {
+    // Cek ganjil / genap menggunakan properti isOdd bawaan BigInt
+    if (nomor.isOdd) {
       _tampilkanPesan('Meja $nomor (Ganjil) -> Zona A', false, false);
     } else {
       _tampilkanPesan('Meja $nomor (Genap) -> Zona B', false, false);
